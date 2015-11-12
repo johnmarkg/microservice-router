@@ -1,0 +1,25 @@
+{
+  "name": "microservice-router",
+  "version": "0.0.1",
+  "description": "route requests (using http-proxt) to services that have registered via http",
+  "main": "index.js",
+  "scripts": {
+    "test": "make test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "debug": "^2.2.0",
+    "http-proxy": "^1.12.0",
+    "ipaddr.js": "^1.0.4",
+    "md5": "^2.0.0"
+  },
+  "devDependencies": {
+    "assert": "^1.3.0",
+    "eslint": "^1.2.1",
+    "istanbul": "^0.4.0",
+    "mocha": "^2.3.3",
+    "pre-commit": "^1.1.2"
+  }
+}
