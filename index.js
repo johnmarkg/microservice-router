@@ -59,8 +59,11 @@
 
             if (serviceProviders[service]) {
                 return balance(service, req, res);
+            } else if(serviceProviders[t.defaultService]){
+                return balance(t.defaultService, req, res);
+
             } else {
-                noProvider(service, req, res)
+                return noProvider(service, req, res)
             }
 
             res.end()
@@ -108,6 +111,9 @@
         var config = serviceProviders[service][index]
         console.info('lost provider for ' + service + ': ' + JSON.stringify(config))
         serviceProviders[service].splice(index, 1)
+        if(serviceProviders[service].length == 0){
+            delete serviceProviders[service]
+        }
     }
 
     function balance(service, req, res) {
