@@ -1,6 +1,7 @@
 (function () {
 
     var http = require('http');
+    var querystring = require('querystring')
     var httpProxy = require('http-proxy');
     var debug = require('debug')('microservice-router')
     var ipaddr = require('ipaddr.js');
@@ -139,7 +140,17 @@
     }
 
     function registerProvider(req, res) {
-        var splitPath = req.url.split('/').slice(3)
+
+        var splitQuery = req.url.split('?')
+        console.info(splitQuery);
+        var query;
+        if(splitQuery[1]){
+            query = querystring.parse(splitQuery[1])
+        }
+
+        var splitPath = splitQuery[0].split('/').slice(3)
+
+
 
         var service = splitPath[0];
         var port = splitPath[1];
@@ -168,8 +179,8 @@
         }
 
         var checkPath = '/'
-        if(req.query && req.query.checkPath){
-            checkPath = req.query.checkPath
+        if(query && query.checkPath){
+            checkPath = query.checkPath
         }
 
         serviceProviders[service].push({
