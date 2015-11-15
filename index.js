@@ -11,84 +11,85 @@
     var serviceIds = {};
     var proxy = httpProxy.createProxyServer({});
 
-    function Router(config){
-        if(!config){ config = {}; }
+    function Router(config) {
+        if (!config) {
+            config = {};
+        }
 
         this.port = config.port || 59000
-        this.checkProvidersInterval = config.checkProvidersInterval || 1 * 1000 * 30
+        this.checkProvidersInterval = config.checkProvidersInterval || 1 *
+            1000 * 30
         this.registerPath = config.registerPath || '/router/register/'
         this.defaultService = config.defaultService || 'web'
 
+        var t = this
 
+        this.server = http.createServer(t.createHandler.bind(this));
 
-
+        setInterval(checkProviders, t.checkProvidersInterval)
 
         return this;
     }
 
-    module.exports = function(config){
+    module.exports = function (config) {
         return new Router(config)
     }
 
-    Router.prototype.start = function(cb){
+    Router.prototype.createHandler = function (req, res) {
 
         var t = this;
-        // Create your custom server and just call `proxy.web()` to proxy
-        // a web request to the target passed in the options
-        // also you can use `proxy.ws()` to proxy a websockets request
 
-        setInterval(checkProviders, t.checkProvidersInterval)
+        debug(Date.now() + ' ' + req.method + ' - ' + req.url)
 
-        var server = http.createServer(function (req, res) {
+        if (req.url.indexOf(t.registerPath) == 0) {
+            return registerProvider(req, res)
+        } else if (req.url.indexOf('/routes') == 0) {
+            return res.end(JSON.stringify(serviceProviders))
+        }
 
-            debug(Date.now() + ' ' + req.method + ' - ' + req.url)
+        var service = t.defaultService
+        var splitPath = req.url.split('/').slice(1);
 
-            if (req.url.indexOf(t.registerPath) == 0) {
-                return registerProvider(req, res)
-            }
-            else if (req.url.indexOf('/routes') == 0) {
-                return res.end(JSON.stringify(serviceProviders))
-                // return registerProvider(req, res)
-            }
+        if (splitPath[0]) {
+            service = splitPath[0]
+        }
 
-            var service = t.defaultService
-            var splitPath = req.url.split('/').slice(1);
+        if (serviceProviders[service]) {
+            return balance(service, req, res);
+        } else if (serviceProviders[t.defaultService]) {
+            return balance(t.defaultService, req, res);
+        } else {
+            return noProvider(service, req, res)
+        }
 
-            if (splitPath[0]) {
-                service = splitPath[0]
-            }
+        res.end()
 
-            if (serviceProviders[service]) {
-                return balance(service, req, res);
-            } else if(serviceProviders[t.defaultService]){
-                return balance(t.defaultService, req, res);
+    }
 
-            } else {
-                return noProvider(service, req, res)
-            }
+    Router.prototype.start = function (cb) {
 
-            res.end()
-        });
+        var t = this;
 
-        if(typeof cb !== 'function'){
+        if (typeof cb !== 'function') {
             cb = function () {
                 console.log("listening on port " + t.port)
             }
         }
-        server.listen(t.port, cb);
+        t.server.listen(t.port, cb);
     }
 
     function checkProviders() {
+        debug('checkProviders')
 
         for (var service in serviceProviders) {
-            // debug('checkProviders: ' + service)
+            debug('checkProviders: ' + service)
 
             serviceProviders[service].forEach(function (config, index) {
-                // debug(JSON.stringify(arguments))
+                debug(JSON.stringify(arguments))
                 var req = http.get({
                     host: config.host,
                     port: config.port,
-                    path : config.path || '/'
+                    path: config.path || '/'
                 }, function (res) {
                     if (res.statusCode != 200) {
                         removeProvider(service, index)
@@ -103,18 +104,18 @@
     }
 
     function noProvider(service, req, res) {
-        console.info('no services registered: ' + service)
         res.statusCode = 400
         return res.end('no providers registered for service: ' + service)
     }
 
     function removeProvider(service, index) {
         var config = serviceProviders[service][index]
-        console.info('lost provider for ' + service + ': ' + JSON.stringify(config))
+        console.info('lost provider for ' + service + ': ' + JSON.stringify(
+            config))
         serviceProviders[service].splice(index, 1)
-        if(serviceProviders[service].length == 0){
-            delete serviceProviders[service]
-        }
+            // if(serviceProviders[service].length == 0){
+            //     delete serviceProviders[service]
+            // }
     }
 
     function balance(service, req, res) {
@@ -140,24 +141,22 @@
     }
 
     function registerProvider(req, res) {
-
+        debug('registerProvider')
         var splitQuery = req.url.split('?')
-        console.info(splitQuery);
+            // console.info(splitQuery);
         var query;
-        if(splitQuery[1]){
+        if (splitQuery[1]) {
             query = querystring.parse(splitQuery[1])
         }
 
         var splitPath = splitQuery[0].split('/').slice(3)
 
-
-
         var service = splitPath[0];
         var port = splitPath[1];
 
         var host = req.headers["x-forwarded-for"] || req.connection.remoteAddress; //splitPath[1];
-        host =  ipaddr.process(host)
-        if(host.octets){
+        host = ipaddr.process(host)
+        if (host.octets) {
             host = host.octets.join('.')
         }
 
@@ -179,7 +178,7 @@
         }
 
         var checkPath = '/'
-        if(query && query.checkPath){
+        if (query && query.checkPath) {
             checkPath = query.checkPath
         }
 
