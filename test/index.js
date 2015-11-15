@@ -9,7 +9,7 @@
     var providerWeb, providerApi, providerApi2;
 
 	var request = require('supertest');
-    var assert = require('assert');
+    // var assert = require('assert');
 
     // var router = require('../index.js')()
     // console.info(router)
@@ -137,21 +137,21 @@
     });
 
 
-    describe('GET /routes', function(){
-        it('3 providers registered', function(done){
-            request(router.server)
-				.get('/routes')
-				.expect(200, function(err, res){
-                    if(err){
-                        throw err
-                    }
-                    var json = JSON.parse(res.text)
-                    assert.equal(1, json.web.length)
-                    assert.equal(2, json.api.length)
-                    done()
-                })
-        })
-    })
+    // describe('GET /routes', function(){
+    //     it('3 providers registered', function(done){
+    //         request(router.server)
+	// 			.get('/routes')
+	// 			.expect(200, function(err, res){
+    //                 if(err){
+    //                     throw err
+    //                 }
+    //                 var json = JSON.parse(res.text)
+    //                 assert.equal(1, json.web.length)
+    //                 assert.equal(2, json.api.length)
+    //                 done()
+    //             })
+    //     })
+    // })
 
     describe('lose 1st API provider, removed on routing', function(){
         before(function(done){
@@ -165,20 +165,20 @@
                 .expect(200, done)
         })
 
-        it('2 providers registered', function(done){
-            request(router.server)
-				.get('/routes')
-                // .expect('{}')
-				.expect(200, function(err, res){
-                    if(err){
-                        throw err
-                    }
-                    var json = JSON.parse(res.text)
-                    assert.equal(1, json.web.length)
-                    assert.equal(1, json.api.length)
-                    done()
-                })
-        })
+        // it('2 providers registered', function(done){
+        //     request(router.server)
+		// 		.get('/routes')
+        //         // .expect('{}')
+		// 		.expect(200, function(err, res){
+        //             if(err){
+        //                 throw err
+        //             }
+        //             var json = JSON.parse(res.text)
+        //             assert.equal(1, json.web.length)
+        //             assert.equal(1, json.api.length)
+        //             done()
+        //         })
+        // })
     })
 
     describe('lose 2nd API provider, removed by checkProviders', function(){
