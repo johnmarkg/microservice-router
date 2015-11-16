@@ -152,10 +152,10 @@
             });
         })
 
-        it('providerApi 200', function(done){
+        it('providerApi 200, query in checkPath', function(done){
 
             request(router.server)
-                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up')
+                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up?noLog=1')
                 .expect('')
 				.expect(200, done)
 
