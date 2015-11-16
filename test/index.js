@@ -143,6 +143,11 @@
         var service = 'api'
         before(function(done){
             providerApi2 = http.createServer(function(req, res  ){
+                console.info(req.url)
+                if(req.url.match('up')){
+                    assert(req.url.match(/noLog=1/))    
+                }
+
                 res.end(service);
             })
 
