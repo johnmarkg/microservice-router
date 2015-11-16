@@ -141,11 +141,14 @@
 
     function registerProvider(req, res) {
         debug('registerProvider: ' + req.url)
+
+
+        // parse request query
         var splitQuery = req.url.split('?')
-            // console.info(splitQuery);
         var query;
         if (splitQuery[1]) {
-            query = querystring.parse(splitQuery[1])
+            // account for unencoded url
+            query = querystring.parse(splitQuery.slice(1).join('?'))
         }
 
         // account for leading slash presence/absence
