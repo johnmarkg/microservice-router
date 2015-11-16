@@ -18,7 +18,7 @@
 
         this.port = config.port || 59000
         this.checkProvidersInterval = config.checkProvidersInterval || (1000 * 30)
-        this.registerPath = config.registerPath || '/router/register/'
+        this.registerPath = config.registerPath || '/router/register'
         this.getProvidersPath = config.getProvidersPath || '/routes'
         this.defaultService = config.defaultService || 'web'
 
@@ -148,7 +148,11 @@
             query = querystring.parse(splitQuery[1])
         }
 
-        var splitPath = splitQuery[0].split('/').slice(1)
+        // account for leading slash presence/absence
+        var splitPath = splitQuery[0].split('/')
+        if(!splitPath[0]){
+            splitPath = splitPath.slice(1)
+        }
 
         var service = splitPath[0];
         var port = splitPath[1];

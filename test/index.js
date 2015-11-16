@@ -25,7 +25,7 @@
         it('defaults', function(){
             var _router = require('../index.js')()
             assert.equal(30 * 1000, _router.checkProvidersInterval)
-            assert.equal('/router/register/', _router.registerPath)
+            assert.equal('/router/register', _router.registerPath)
             assert.equal('/routes', _router.getProvidersPath)
             assert.equal('web', _router.defaultService)
             assert.equal(null, _router.accessKey)
