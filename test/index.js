@@ -121,10 +121,10 @@
             });
         })
 
-        it('providerApi 200', function(done){
+        it('providerApi 200, single alias', function(done){
 
             request(router.server)
-                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up')
+                .post(registerPath + '/'+ service+ '/'+ port + "?checkPath=/up&alias=api2")
                 .expect('')
 				.expect(200, done)
 
@@ -136,6 +136,13 @@
                 .expect(service)
                 .expect(200, done)
         })
+        it('GET /api2 ', function(done){
+            request(router.server)
+				.get('/api2')
+                .expect(service)
+                .expect(200, done)
+        })
+
     });
 
     describe('register providerApi2', function(){
@@ -145,7 +152,7 @@
             providerApi2 = http.createServer(function(req, res  ){
                 console.info(req.url)
                 if(req.url.match('up')){
-                    assert(req.url.match(/noLog=1/))    
+                    assert(req.url.match(/noLog=1/))
                 }
 
                 res.end(service);
@@ -157,13 +164,11 @@
             });
         })
 
-        it('providerApi 200, query in checkPath', function(done){
-
+        it('providerApi 200, query in checkPath, multiple aliases', function(done){
             request(router.server)
-                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up?noLog=1')
+                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up?noLog=1&alias=api2&alias=api3')
                 .expect('')
 				.expect(200, done)
-
         })
     });
 
@@ -181,6 +186,21 @@
 
     })
 
+    describe('route using alias', function(){
+        it('GET /api2 ', function(done){
+            request(router.server)
+				.get('/api2')
+                .expect('api')
+                .expect(200, done)
+        })
+        it('GET /api3 ', function(done){
+            request(router.server)
+				.get('/api3')
+                .expect('api')
+                .expect(200, done)
+        })
+    })
+
     describe('lose 2nd API provider, removed by checkProviders', function(){
         before(function(done){
             providerApi2.close(function(){
@@ -192,6 +212,13 @@
             request(router.server)
 				.get('/api')
                 .expect('no providers registered for service: api')
+                .expect(400, done)
+        })
+
+        it('GET /api2 400', function(done){
+            request(router.server)
+				.get('/api2')
+                .expect('no providers registered for service: api2')
                 .expect(400, done)
         })
 

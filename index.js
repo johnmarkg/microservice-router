@@ -9,6 +9,7 @@
     var md5 = require('md5')
     var serviceProviders = {}
     var serviceIds = {};
+    // var aliases = {};
     var proxy = httpProxy.createProxyServer({});
 
     function Router(config) {
@@ -62,8 +63,6 @@
         } else {
             return noProvider(service, req, res)
         }
-
-        // res.end()
     }
 
     Router.prototype.start = function (cb) {
@@ -85,6 +84,9 @@
             debug('checkProviders: ' + service)
 
             serviceProviders[service].forEach(function (config, index) {
+                if(config.alias){
+                    return
+                }
                 debug(JSON.stringify(arguments))
                 var req = http.get({
                     host: config.host,
@@ -151,6 +153,8 @@
             query = querystring.parse(splitQuery.slice(1).join('?'))
         }
 
+        console.info(query)
+
         // account for leading slash presence/absence
         var splitPath = splitQuery[0].split('/')
         if(!splitPath[0]){
@@ -193,6 +197,24 @@
             port: port,
             path: checkPath
         })
+
+        if (query && query.alias) {
+            if(typeof query.alias != 'object'){
+                query.alias = [query.alias]
+            }
+            query.alias.forEach(function(a){
+                if (!serviceProviders[a]) {
+                    serviceProviders[a] = []
+                }
+                serviceProviders[a].push({
+                    host: host,
+                    port: port,
+                    alias: true
+                })
+            })
+        }
+
+
         return res.end();
     }
 
