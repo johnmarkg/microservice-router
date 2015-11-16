@@ -1,6 +1,6 @@
 {
   "name": "microservice-router",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "route requests (using http-proxy) to services that have registered via http",
   "main": "index.js",
   "scripts": {
