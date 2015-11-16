@@ -2,32 +2,58 @@
     var http = require('http')
 	// process.setMaxListeners(20)
 
+    // var async = require('async')
+
     // var rewire = require("rewire");
     // var router = rewire("../index.js");
     var checkInterval = 10
-    var router = require('../index.js')({checkProvidersInterval: checkInterval})
+    var registerPath = '/register'
+    var getProvidersPath = '/get-routes'
+    var defaultService = 'default'
+    var router = require('../index.js')({
+        checkProvidersInterval: checkInterval,
+        registerPath: registerPath,
+        getProvidersPath: getProvidersPath,
+        defaultService: defaultService
+    })
     var providerWeb, providerApi, providerApi2;
 
 	var request = require('supertest');
-    // var assert = require('assert');
+    var assert = require('assert');
 
-    // var router = require('../index.js')()
-    // console.info(router)
-    // var server = re
+    describe('default config', function(){
+        it('defaults', function(){
+            var _router = require('../index.js')()
+            assert.equal(30 * 1000, _router.checkProvidersInterval)
+            assert.equal('/router/register/', _router.registerPath)
+            assert.equal('/routes', _router.getProvidersPath)
+            assert.equal('web', _router.defaultService)
+            assert.equal(null, _router.accessKey)
+        })
+    })
 
     describe('GET /routes', function(){
         it('nothing registered yet', function(done){
             request(router.server)
-				.get('/routes')
+				.get(getProvidersPath)
                 .expect('{}')
 				.expect(200, done)
+        })
+    })
+
+    describe('no providers', function(){
+        it('400', function(done){
+            request(router.server)
+				.get('/')
+                .expect(/no providers registered for service/)
+				.expect(400, done)
         })
     })
 
     describe('register providerWeb', function(){
 
         var port;
-        var service = 'web';
+        var service = defaultService;
         before(function(done){
             providerWeb = http.createServer(function(req, res  ){
                 res.end(service);
@@ -42,7 +68,7 @@
         it('providerWeb 200', function(done){
 
             request(router.server)
-				.post('/router/register/'+ service+ '/'+ port)
+				.post(registerPath + '/'+ service+ '/'+ port)
                 .expect('')
 				.expect(200, done)
 
@@ -50,33 +76,33 @@
         it('200, reregister', function(done){
 
             request(router.server)
-				.post('/router/register/web/'+ port)
+				.post(registerPath + '/'+ service+ '/'+ port)
                 .expect('')
 				.expect(200, done)
 
         })
         it('listed once only', function(done){
+            var expected = {};
+            expected[defaultService] = [{
+                host: "127.0.0.1",
+                port: port.toString(),
+                path : '/'
+            }]
             request(router.server)
-				.get('/routes')
-                .expect(JSON.stringify({
-                    "web" : [{
-                        host: "127.0.0.1",
-                        port: port.toString(),
-                        path : '/'
-                    }]
-                }))
+				.get(getProvidersPath)
+                .expect(JSON.stringify(expected))
 				.expect(200, done)
         })
-        it('`web` gets routed', function(done){
+        it('`' + defaultService + '` gets routed', function(done){
             request(router.server)
-				.get('/web')
-                .expect('web')
+				.get('/' + defaultService)
+                .expect(defaultService)
                 .expect(200, done)
         })
-        it('web is defaul provider', function(done){
+        it('`' + defaultService + '` is default provider', function(done){
             request(router.server)
-				.get('/something else')
-                .expect('web')
+				.get('/something-else')
+                .expect(defaultService)
                 .expect(200, done)
         })
     })
@@ -98,7 +124,7 @@
         it('providerApi 200', function(done){
 
             request(router.server)
-				.post('/router/register/'+ service+ '/'+ port + '?checkPath=/up')
+                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up')
                 .expect('')
 				.expect(200, done)
 
@@ -106,8 +132,8 @@
 
         it('GET /api is routed', function(done){
             request(router.server)
-				.get('/api')
-                .expect('api')
+				.get('/' + service)
+                .expect(service)
                 .expect(200, done)
         })
     });
@@ -129,29 +155,12 @@
         it('providerApi 200', function(done){
 
             request(router.server)
-				.post('/router/register/'+ service+ '/'+ port + '?checkPath=/up')
+                .post(registerPath + '/'+ service+ '/'+ port + '?checkPath=/up')
                 .expect('')
 				.expect(200, done)
 
         })
     });
-
-
-    // describe('GET /routes', function(){
-    //     it('3 providers registered', function(done){
-    //         request(router.server)
-	// 			.get('/routes')
-	// 			.expect(200, function(err, res){
-    //                 if(err){
-    //                     throw err
-    //                 }
-    //                 var json = JSON.parse(res.text)
-    //                 assert.equal(1, json.web.length)
-    //                 assert.equal(2, json.api.length)
-    //                 done()
-    //             })
-    //     })
-    // })
 
     describe('lose 1st API provider, removed on routing', function(){
         before(function(done){
@@ -165,20 +174,6 @@
                 .expect(200, done)
         })
 
-        // it('2 providers registered', function(done){
-        //     request(router.server)
-		// 		.get('/routes')
-        //         // .expect('{}')
-		// 		.expect(200, function(err, res){
-        //             if(err){
-        //                 throw err
-        //             }
-        //             var json = JSON.parse(res.text)
-        //             assert.equal(1, json.web.length)
-        //             assert.equal(1, json.api.length)
-        //             done()
-        //         })
-        // })
     })
 
     describe('lose 2nd API provider, removed by checkProviders', function(){
@@ -195,55 +190,7 @@
                 .expect(400, done)
         })
 
-        // it('2 providers registered', function(done){
-        //     request(router.server)
-		// 		.get('/routes')
-        //         // .expect('{}')
-		// 		.expect(200, function(err, res){
-        //             // console.info(JSON.parse(res.text));
-        //             var json = JSON.parse(res.text)
-        //             assert.equal(1, json.web.length)
-        //             assert.equal(1, json.api.length)
-        //             done()
-        //         })
-        // })
     })
 
-
-    // describe('checkProvider', function(){
-    //     var port;
-    //     var service = 'web'
-    //     before(function(done){
-    //         router = require('../index.js')({checkProvidersInterval: 10})
-    //
-    //         var provider = http.createServer(function(req, res){
-    //             res.end(service);
-    //         })
-    //
-    //         provider.listen(function(){
-    //             port = this.address().port
-    //             done()
-    //         });
-    //     })
-    //     it('register', function(done){
-    //
-    //         request(router.server)
-	// 			.post('/router/register/' + service + '/'+ port)
-    //             .expect('')
-	// 			.expect(200, done)
-    //
-    //     })
-    //
-    //     it('routed', function(done){
-    //
-    //         request(router.server)
-	// 			.get('/' + service)
-    //             .expect(service)
-	// 			.expect(200, done)
-    //
-    //     })
-    //
-    //
-    // })
 
 }).call(this);

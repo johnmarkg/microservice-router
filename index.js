@@ -17,9 +17,9 @@
         }
 
         this.port = config.port || 59000
-        this.checkProvidersInterval = config.checkProvidersInterval || 1 *
-            1000 * 30
+        this.checkProvidersInterval = config.checkProvidersInterval || (1000 * 30)
         this.registerPath = config.registerPath || '/router/register/'
+        this.getProvidersPath = config.getProvidersPath || '/routes'
         this.defaultService = config.defaultService || 'web'
 
         var t = this
@@ -42,8 +42,9 @@
         debug(Date.now() + ' ' + req.method + ' - ' + req.url)
 
         if (req.url.indexOf(t.registerPath) == 0) {
+            req.url = req.url.replace(t.registerPath, '');
             return registerProvider(req, res)
-        } else if (req.url.indexOf('/routes') == 0) {
+        } else if (req.url.indexOf(t.getProvidersPath) == 0) {
             return res.end(JSON.stringify(serviceProviders))
         }
 
@@ -62,8 +63,7 @@
             return noProvider(service, req, res)
         }
 
-        res.end()
-
+        // res.end()
     }
 
     Router.prototype.start = function (cb) {
@@ -128,7 +128,6 @@
         var index = 0
         var config = serviceProviders[service][index]
         var url = 'http://' + config.host + ':' + config.port
-            // var handler =
 
         proxy.web(req, res, {
             target: url
@@ -141,7 +140,7 @@
     }
 
     function registerProvider(req, res) {
-        debug('registerProvider')
+        debug('registerProvider: ' + req.url)
         var splitQuery = req.url.split('?')
             // console.info(splitQuery);
         var query;
@@ -149,7 +148,7 @@
             query = querystring.parse(splitQuery[1])
         }
 
-        var splitPath = splitQuery[0].split('/').slice(3)
+        var splitPath = splitQuery[0].split('/').slice(1)
 
         var service = splitPath[0];
         var port = splitPath[1];
